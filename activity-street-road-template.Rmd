@@ -1,6 +1,7 @@
 ---
 title: "Activity: Street or Road?"
-author: "YOUR NAME HERE"
+author: "Jai abhishek singh"
+Date : "6th August 2024"
 output: html_notebook
 ---
 
@@ -10,8 +11,22 @@ output: html_notebook
 #load libraries 
 
 #load in the data here 
-# we will only be using the "street-addresses.csv" file from the text
 
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+
+# Load the street addresses dataset
+street_addresses <- read_csv("https://mdbeckman.github.io/dcSupplement/data/street-addresses.csv")
+
+download.file(url="https://mdbeckman.github.io/dcSupplement/data/CMS_ProvidersSimple.rds",
+              destfile = "Streetaddressfile.rds")
+Datatable <- readRDS("Streetaddressfile.rds")
+
+# Display a sample 
+head(street_addresses)
+head(Datatable)
 
 
 ```
@@ -19,6 +34,16 @@ output: html_notebook
 ## Recreate Solved Example using `sample(50)`
 
 ```{r}
+# Sample 50 addresses 
+sample_addresses <- street_addresses %>% sample_n(50)
+head(sample_addresses)
+
+# Find addresses that has "PO" 
+po_address <- sample_addresses %>%
+  filter(grepl("PO", address, ignore.case = TRUE))
+
+# Display PO BOX matches
+po_address
 
 
 ```
@@ -26,18 +51,25 @@ output: html_notebook
 ## Recreate Soved Example using the entire `Address` data set
 
 ```{r}
+# Find addresses in the entire dataset that has "PO"
+po_address_all <- street_addresses %>%
+  filter(grepl("PO", address, ignore.case = TRUE))
 
+po_address_all
 
 ```
 
 #### Additional Question: How many addresses are a PO BOX (including NCSU BOX)? 
 
 ```{r}
+# addresses that has "PO BOX" or "NCSU BOX"
+po_or_NCSU <- sum(grepl("PO BOX|NCSU BOX", street_addresses$address, ignore.case = TRUE))
+
+# Print the count
+po_or_NCSU
 
 
 ```
-
-My answer here...... 
 
 
 ## Back to the Streets: Your Turn
@@ -54,21 +86,51 @@ LeftOvers <-
           )
 ```
 
-My answer here.......
+1. pattern <- "(ST|RD|ROAD)": This defines the abbreviations for "Street," "Road," and "Rd."
+
+2. LeftOvers <-: This assigns the result of the operation before it to a variable named 'LeftOvers'.
+
+3. street_addresses %>%: This starts a pipeline for the transformations to the dataset.
+
+4. filter(!grepl(pattern, address),: This removes addresses that match the pattern, i.e addresses with "Street," "Rd," or "Road."
+
+5. !grepl(" BOX ", address)): This removes any addresses containing the word "BOX" . 
+
+
 
 #### Part 2: Implement your method on the entire `Addresses` data set. Explain how your code works line by line.
 
 ```{r}
+# Define all street endings
+extended_pattern <- "(STREET|ST|AVE|AVENUE|RD|ROAD|BLVD|DR|DRIVE|LN|LANE|PL|PLACE|COURT|CT|WAY|CIR|CIRCLE|CRESCENT|TER)"
 
+street_endings <- street_addresses %>%
+  filter(grepl(extended_pattern, address, ignore.case = TRUE)) %>%
+  mutate(ending = str_extract(address, extended_pattern))
+(street_endings)
 
 
 ```
 
-My answer here.......
+1. extended_pattern <- "(STREET|ST|AVE|AVENUE|RD|ROAD|BLVD|DR|DRIVE|LN|LANE|PL|PLACE|COURT|CT|WAY|CIR|CIRCLE|CRESCENT|TER)":  This line adds more street endings such as "AVE," "BLVD," "WAY," "CIR," etc.
+
+
+2. street_addresses %>%: Initiates a pipeline to transform the street_addresses dataset.
+
+3. filter(grepl(extended_pattern, address, ignore.case = TRUE)): Filters all addresses that matchs with the extended pattern object , identifying those which have the mentioned street endings .
+
+4. mutate(ending = str_extract(address, extended_pattern)): takes the matched - street ending pattern from each address and creates a new column ending in the dataset.
+
+5. street_endings: Displays the dataset with extracted street endings. 
 
 #### Additional Question 1: Present your result from part 2 by providing a table in descending order of popularity for the street name endings you found
 
 ```{r}
+
+Street_end_count <- street_endings %>%
+  count(ending, sort = TRUE)
+
+print(Street_end_count)
 
 
 ```
@@ -79,8 +141,16 @@ Note: make sure your order street names according to popularity, not alphabetica
 
 ```{r}
 
+ggplot(ending_counts, aes(x = reorder(ending, n), y = n)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Popularity of Street Name Endings",
+       x = "Street Ending",
+       y = "Count") +
+  theme_minimal() +
+  coord_flip()
+
 ```
 
 #### Additional Question 3: Comment on any patterns you see
 
-My answer here.......
+In the dataset, street endings such as "RD," "ST," and "DR" are more common, likely due to their usage in naming major streets and also Abbreviations are more frequently used . 
